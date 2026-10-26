@@ -10,7 +10,6 @@ javac [YourMainClass].java
 java [YourMainClass] [maze-file]
 ```
 
-[Verify the actual class name and whether it takes a file argument.]
 
 ## Why A*
 
