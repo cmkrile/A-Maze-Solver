@@ -1,41 +1,64 @@
 # A* Maze Solver
 
-Finds the shortest path through a grid maze using A* search, with a comparison
-against uninformed search strategies.
+A Java implementation of A* search that finds the shortest path through a maze
+modeled as an undirected graph.
 
 ## Running it
 
 ```bash
-javac [YourMainClass].java
-java [YourMainClass] [maze-file]
+javac *.java
+java Maze3
 ```
 
+The maze is hardcoded in `Maze3.buildGraph()`; the program takes no arguments.
 
-## Why A*
+Output:
 
-A* orders its search by `f(n) = g(n) + h(n)`:
+```
+Starting point: 03
+Goal point: 30
+Path: 03 -> 13 -> 23 -> 22 -> 12 -> 02 -> 01 -> 11 -> 21 -> 31 -> 30
+```
 
-- `g(n)` — the exact cost to reach node `n` from the start
-- `h(n)` — a Manhattan-distance estimate of the remaining cost to the goal
+Cells print as `colRow` (see `State.toString`), so `03` is column 0, row 3 (the
+bottom-left start) and `30` is column 3, row 0 (the top-right goal).
 
-Because the Manhattan heuristic never overestimates the true remaining distance
-on a 4-directional grid, it is *admissible*, which means A* is guaranteed to
-find an optimal path. The heuristic lets it skip large regions of the maze that
-BFS would explore anyway.
+## Files
+
+| File | Purpose |
+|------|---------|
+| `Maze3.java` | Builds the maze graph, runs A*, rebuilds and prints the path |
+| `AdjacencyList.java` | Undirected graph backed by a `HashMap<Integer, ArrayList<Integer>>` |
+| `State.java` | A (row, col) cell position |
+
+## How it works
+
+A* expands nodes in order of `f(n) = g(n) + h(n)`:
+
+- `g(n)`: the exact number of steps taken from the start to `n`
+- `h(n)`: the Manhattan distance from `n` to the goal
+
+On a 4-directional grid with unit step cost, Manhattan distance never
+overestimates the true remaining distance, so the heuristic is *admissible* and
+the first time the goal is popped from the queue its path is optimal.
 
 ## Implementation notes
 
-- Maze modeled as a 2D grid encoding walls, open cells, start, and goal
-- Priority queue ordered by `f(n)` selects the next node to expand
-- Predecessor map reconstructs the path once the goal is reached
-- Handles dead ends and unreachable goals with explicit failure output
+- **Graph representation:** the maze is an adjacency list of open passages. Each
+  cell `(r, c)` maps to a single integer ID (`r * cols + c`). Walls are
+  represented by the absence of an edge, so only open connections are added in
+  `buildGraph()`.
+- **Priority queue:** a `PriorityQueue<PQItem>` ordered by `f`, with ties broken
+  by node ID so results are deterministic.
+- **No decrease-key:** when a cheaper route to a node is found, a new queue entry
+  is added and stale entries are skipped when popped (the `visited` check).
+- **Path reconstruction:** a `cameFrom` array records each node's predecessor,
+  and the path is rebuilt by walking back from the goal and reversing.
+- **Unreachable goal:** if the queue empties without reaching the goal, `aStar`
+  returns `null` and the program prints `No path found.`
 
-## Benchmarks
+## Limitations
 
-Compared against BFS and DFS across increasing maze sizes. A* explored
-measurably fewer nodes on larger mazes, with the gap widening as the search
-space grew.
-
-[Drop in your actual numbers here if you still have them — a small table of
-maze size vs. nodes explored per algorithm is the single most convincing thing
-you can put in this README.]
+- The maze is a hardcoded 4x4 grid (`rows` and `cols` constants in `Maze3`); it
+  is not read from a file.
+- Only A* is implemented. There is no BFS/DFS comparison or benchmarking yet.
